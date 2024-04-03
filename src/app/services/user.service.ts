@@ -51,13 +51,15 @@ export class UserService {
                 fs.chmodSync(directory, 0o755);
             }
         } catch (mkdirError) {
-            console.error('Error creating directory:', mkdirError);
+          console.error('Error creating directory:', mkdirError);
+          throw new Error('Error creating directory');
         }
 
         try {
             fs.writeFileSync(filePath, response.data);
         } catch (writeError) {
-            console.error('Error writing file:', writeError);
+          console.error('Error writing file:', writeError);
+          throw new Error('Error writing file');
         }
 
         const base64Image = `data:image/png;base64,${Buffer.from(response.data, 'binary').toString('base64')}`;
@@ -80,7 +82,8 @@ export class UserService {
         try {
             fs.writeFileSync(jsonFilePath, JSON.stringify(existingData));
         } catch (writeJsonError) {
-            console.error('Error writing JSON file:', writeJsonError);
+          console.error('Error writing JSON file:', writeJsonError);
+          throw new Error('Error writing JSON file');
         }
 
         const updatedUser = await this.userModel.findByIdAndUpdate(
@@ -113,7 +116,8 @@ export class UserService {
         try {
             fs.unlinkSync(avatarFilePath);
         } catch (unlinkError) {
-            console.error('Error deleting avatar file:', unlinkError);
+          console.error('Error deleting avatar file:', unlinkError);
+          throw new Error('Error deleting avatar file');
         }
 
         const updatedAvatarData = avatarData.filter((data: any) => data.userId !== userId.toString());
@@ -121,7 +125,8 @@ export class UserService {
         try {
             fs.writeFileSync(avatarDataPath, JSON.stringify(updatedAvatarData, null, 2));
         } catch (writeError) {
-            console.error('Error writing avatar data to file:', writeError);
+          console.error('Error writing avatar data to file:', writeError);
+          throw new Error('Error writing avatar data to file');
         }
 
         await this.userModel.findByIdAndUpdate(userId, { avatar: "" });
