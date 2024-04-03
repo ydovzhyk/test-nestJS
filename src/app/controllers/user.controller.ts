@@ -41,8 +41,11 @@ export class UserController {
         
         return data;
     } catch (error) {
-        throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+    if (error instanceof HttpException) {
+      throw error;
     }
+    throw new HttpException('Internal server error', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 }
 
   @Get('user/:userId')
