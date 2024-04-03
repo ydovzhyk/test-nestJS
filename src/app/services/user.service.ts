@@ -37,47 +37,59 @@ export class UserService {
 
   async downloadAvatarAndSave(userId: Types.ObjectId, avatarUrl: string): Promise<any> {
     try {
-      const response = await axios.get(avatarUrl, {
-        responseType: 'arraybuffer',
-      });
-      
-      const fileName = `avatar_${uuidv4()}.png`;
-      const directory = '/tmp';
-      // const directory = path.join(process.cwd(), 'uploads');
-      const filePath = path.join(directory, fileName);
+        const response = await axios.get(avatarUrl, {
+            responseType: 'arraybuffer',
+        });
 
-      if (!fs.existsSync(directory)) {
-        fs.mkdirSync(directory, { recursive: true });
-        fs.chmodSync(directory, 0o755);
-      }
-      
-      fs.writeFileSync(filePath, response.data);
+        const fileName = `avatar_${uuidv4()}.png`;
+        const directory = '/tmp';
+        const filePath = path.join(directory, fileName);
 
-      const base64Image = `data:image/png;base64,${Buffer.from(response.data, 'binary').toString('base64')}`;
-  
-      const avatarData = {
-          userId: userId.toString(),
-          filePath: filePath,
+        try {
+            if (!fs.existsSync(directory)) {
+                fs.mkdirSync(directory, { recursive: true });
+                fs.chmodSync(directory, 0o755);
+            }
+        } catch (mkdirError) {
+            console.error('Error creating directory:', mkdirError);
+        }
+
+        try {
+            fs.writeFileSync(filePath, response.data);
+        } catch (writeError) {
+            console.error('Error writing file:', writeError);
+        }
+
+        const base64Image = `data:image/png;base64,${Buffer.from(response.data, 'binary').toString('base64')}`;
+
+        const avatarData = {
+            userId: userId.toString(),
+            filePath: filePath,
         };
 
-      const jsonFilePath = path.join(directory, 'avatar_data.json');
+        const jsonFilePath = path.join(directory, 'avatar_data.json');
 
-      let existingData = [];
-      if (fs.existsSync(jsonFilePath)) {
-        const existingJsonData = fs.readFileSync(jsonFilePath, 'utf-8');
-          existingData = JSON.parse(existingJsonData);
-      }
-      existingData.push(avatarData);
-        
-      fs.writeFileSync(jsonFilePath, JSON.stringify(existingData));
+        let existingData = [];
+        if (fs.existsSync(jsonFilePath)) {
+            const existingJsonData = fs.readFileSync(jsonFilePath, 'utf-8');
+            existingData = JSON.parse(existingJsonData);
+        }
 
-      const updatedUser = await this.userModel.findByIdAndUpdate(
-        userId,
-        { avatar: base64Image },
-        { new: true },
-      );
-      
-      return updatedUser.avatar;
+        existingData.push(avatarData);
+
+        try {
+            fs.writeFileSync(jsonFilePath, JSON.stringify(existingData));
+        } catch (writeJsonError) {
+            console.error('Error writing JSON file:', writeJsonError);
+        }
+
+        const updatedUser = await this.userModel.findByIdAndUpdate(
+            userId,
+            { avatar: base64Image },
+            { new: true },
+        );
+
+        return updatedUser.avatar;
     } catch (error) {
         throw error;
     }
@@ -85,25 +97,34 @@ export class UserService {
 
   async deleteAvatarAndSave(userId: Types.ObjectId): Promise<any> {
     try {
-      // const avatarDataPath = path.join(process.cwd(), 'uploads', 'avatar_data.json');
-      const avatarDataPath = '/tmp/avatar_data.json';
-      const avatarData = JSON.parse(fs.readFileSync(avatarDataPath, 'utf-8'));
+        const avatarDataPath = '/tmp/avatar_data.json';
+        const avatarData = JSON.parse(fs.readFileSync(avatarDataPath, 'utf-8'));
 
-      const existingAvatarData = avatarData.find((data: any) => {
-        return data.userId === userId.toString();
-      });
-      
-      if (!existingAvatarData) {
-        throw new Error('Avatar data not found');
-      }
-      
-      const avatarFilePath = existingAvatarData.filePath;
-      fs.unlinkSync(avatarFilePath);
+        const existingAvatarData = avatarData.find((data: any) => {
+            return data.userId === userId.toString();
+        });
 
-      const updatedAvatarData = avatarData.filter((data: any) => data.userId !== userId.toString());
-        fs.writeFileSync(avatarDataPath, JSON.stringify(updatedAvatarData, null, 2));
+        if (!existingAvatarData) {
+            throw new Error('Avatar data not found');
+        }
 
-      await this.userModel.findByIdAndUpdate(userId, { avatar: "" });
+        const avatarFilePath = existingAvatarData.filePath;
+        
+        try {
+            fs.unlinkSync(avatarFilePath);
+        } catch (unlinkError) {
+            console.error('Error deleting avatar file:', unlinkError);
+        }
+
+        const updatedAvatarData = avatarData.filter((data: any) => data.userId !== userId.toString());
+        
+        try {
+            fs.writeFileSync(avatarDataPath, JSON.stringify(updatedAvatarData, null, 2));
+        } catch (writeError) {
+            console.error('Error writing avatar data to file:', writeError);
+        }
+
+        await this.userModel.findByIdAndUpdate(userId, { avatar: "" });
 
     } catch (error) {
         throw error;
