@@ -2,7 +2,7 @@ import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserController } from '../controllers/user.controller';
-import { databaseConfig } from '../../../config/database.config';
+import { databaseConfig } from '../config/database.config';
 import { UserService } from '../services/user.service'; 
 import { SendGridService } from '../services/sendgrid.service';
 import { User, UserModel } from '../../models/user.model';
