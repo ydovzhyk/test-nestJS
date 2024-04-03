@@ -42,7 +42,8 @@ export class UserService {
       });
       
       const fileName = `avatar_${uuidv4()}.png`;
-      const directory = path.join(process.cwd(), 'uploads');
+      const directory = '/tmp';
+      // const directory = path.join(process.cwd(), 'uploads');
       const filePath = path.join(directory, fileName);
 
       if (!fs.existsSync(directory)) {
@@ -84,7 +85,8 @@ export class UserService {
 
   async deleteAvatarAndSave(userId: Types.ObjectId): Promise<any> {
     try {
-      const avatarDataPath = path.join(process.cwd(), 'uploads', 'avatar_data.json');
+      // const avatarDataPath = path.join(process.cwd(), 'uploads', 'avatar_data.json');
+      const avatarDataPath = '/tmp/avatar_data.json';
       const avatarData = JSON.parse(fs.readFileSync(avatarDataPath, 'utf-8'));
 
       const existingAvatarData = avatarData.find((data: any) => {
